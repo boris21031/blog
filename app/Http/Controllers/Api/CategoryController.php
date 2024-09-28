@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Validator;
-use Response;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Response;
 use App\Http\Resources\CategoryResource;
 use Illuminate\Validation\Rule;
 use App\Models\Category;
@@ -50,7 +50,7 @@ class CategoryController extends Controller {
     }
 
     // show a specific category by id
-    public function show($id){        
+    public function show($id){
         if(Category::where('id',$id)->first()){
             return new CategoryResource(Category::findOrFail($id));
         }else{
@@ -103,7 +103,7 @@ class CategoryController extends Controller {
             }
         }catch(\Illuminate\Database\QueryException $exception){
             return Response::json(['error'=>'Category belongs to an article.So you cann\'t delete this category!']);
-        }        
+        }
     }
 
     // search category by keyword

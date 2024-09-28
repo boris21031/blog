@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Comment;
 use App\Http\Resources\CommentResource;
-use Response;
-use Validator;
-use Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Auth;
 
 class CommentController extends Controller {
     // show comments
@@ -56,7 +56,7 @@ class CommentController extends Controller {
             return new CommentResource(Comment::findOrFail($id));
         }else{
             return Response::json(['error'=>'Comment not found!']);
-        }        
+        }
     }
 
     // update comment into the database
@@ -77,7 +77,7 @@ class CommentController extends Controller {
                 return Response::json(['success'=>'Comment updated successfully !']);
             }else{
                 return Response::json(['error'=>'Comment not found !']);
-            }            
+            }
         }
     }
 
@@ -93,6 +93,6 @@ class CommentController extends Controller {
             }
         }catch(\Illuminate\Database\QueryException $exception){
             return Response::json(['error'=>'Comment belongs to author/article.So you cann\'t delete this comment!']);
-        }        
+        }
     }
 }

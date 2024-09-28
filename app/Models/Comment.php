@@ -7,8 +7,12 @@ use App\Models\User;
 use App\Models\Article;
 
 class Comment extends Model {
+
     protected $table='comments';
 
+    protected $fillable = [
+        'comment', 'author_id', 'article_id',
+    ];
     public function author(){
         return $this->belongsTo(User::class);
     }

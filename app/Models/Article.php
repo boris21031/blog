@@ -10,6 +10,10 @@ use App\Models\Comment;
 class Article extends Model {
     protected $table='articles';
 
+    protected $fillable = [
+        'title', 'body', 'image', 'author_id', 'category_id',
+    ];
+
     public function category(){
         return $this->belongsTo(Category::class);
     }
