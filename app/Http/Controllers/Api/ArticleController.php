@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\ArticleStatusEnum;
+use App\Enums\CategoryEnum;
 use App\Http\Controllers\Controller;
+use App\Models\Category;
+use App\Rules\CategoryExists;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,70 +16,87 @@ use App\Http\Resources\CommentResource;
 use App\Models\Article;
 use App\Models\Comment;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class ArticleController extends Controller
 {
+    private array $categories = [
+        'designer' => 1,
+        'freelancer' => 2,
+        'tutor' => 3,
+        'marketer' => 4,
+        'programmer' => 5,
+        'production' => 6,
+        'photographer' => 7,
+    ];
+
     // show all the article
-    public function index()
+    public function index(Request $request)
     {
-        return ArticleResource::collection(Article::where('author_id', Auth::user()->id)->orderBy('id', 'DESC')->paginate(10));
-    }
+        $query = Article::query();
+        // Filter by status PUBLISHED
+        $query->where('status', ArticleStatusEnum::PUBLISHED);
 
-    // check title validation
-    public function checkTitle(Request $request)
-    {
-        $validators = Validator::make($request->all(), [
-            'title' => 'required'
-        ]);
-        return Response::json([
-            'errors' => $validators->getMessageBag()->toArray()]
-        );
-    }
+        // Фильтрация по категории
+        if ($request->has('category')) {
+            $categoryName = $request->get('category');
+            if (array_key_exists($categoryName, $this->categories)) {
+                $categoryId = $this->categories[$categoryName];
+                $query->filterByCategory($categoryId);
+            } else {
+                // Обработка случая, когда категория не найдена
+                // Например, можно выбросить исключение или установить ошибку
+            }
+        }
 
-    // check category validation
-    public function checkCategory(Request $request)
-    {
-        $validators = Validator::make($request->all(), [
-            'category' => 'required'
-        ]);
-        return Response::json(['errors' => $validators->getMessageBag()->toArray()]);
-    }
+        // Поиск по заголовку
+        if ($request->has('search')) {
+            $query->search($request->get('search'));
+        }
 
-    // check body validation
-    public function checkBody(Request $request)
-    {
-        $validators = Validator::make($request->all(), [
-            'body' => 'required'
-        ]);
-        return Response::json(['errors' => $validators->getMessageBag()->toArray()]);
+        // Сортировка по свежести
+        if ($request->get('sort') === 'latest') {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $articles = $query->paginate(10);
+
+        return response()->json($articles);
     }
 
     // store new article into the database
     public function store(Request $request)
     {
-        $validators = Validator::make($request->all(), [
-            'title' => 'required',
-            'category' => 'required',
-            'body' => 'required'
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'text' => 'required|string',
+            'status' => 'required|integer|in:1,2,3',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'category' => ['required', 'string', new CategoryExists],
         ]);
-        if ($validators->fails()) {
-            return Response::json(['errors' => $validators->getMessageBag()->toArray()]);
-        } else {
-            $article = new Article();
-            $article->title = $request->title;
-            $article->author_id = Auth::user()->id;
-            $article->category_id = $request->category;
-            $article->body = $request->body;
-            if ($request->file('image') == NULL) {
-                $article->image = 'placeholder.png';
-            } else {
-                $filename = Str::random(20) . '.' . $request->file('image')->getClientOriginalExtension();
-                $article->image = $filename;
-                $request->image->move(public_path('images'), $filename);
-            }
-            $article->save();
-            return Response::json(['success' => 'Article created successfully !']);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
         }
+        $category = Category::where('title', $request->category)->first();
+        $data = $request->only(['title', 'description', 'text','body', 'status']);
+        $data['slug'] = Str::slug($request->title);
+        $data['author_id'] = auth()->id();
+        $data['category_id'] = $category->id;
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $filename = time() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('images'), $filename);
+            $data['image'] = $filename;
+        }
+        $article = Article::create($data);
+
+        return Response::json([
+            'article' => new ArticleResource($article),
+            'success' => 'ArticleStoreRequest created successfully !'
+        ]);
     }
 
     // show a specific article by id
@@ -84,40 +105,54 @@ class ArticleController extends Controller
         if (Article::where('id', $id)->first()) {
             return new ArticleResource(Article::findOrFail($id));
         } else {
-            return Response::json(['error' => 'Article not found!']);
+            return Response::json(['error' => 'ArticleStoreRequest not found!']);
         }
     }
 
     // update article using id
-    public function update(Request $request)
+    public function update(Request $request, $id)
     {
-        $validators = Validator::make($request->all(), [
-            'title' => 'required',
-            'category' => 'required',
-            'body' => 'required'
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'text' => 'required|string',
+            'status' => 'required|integer|in:1,2,3',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'category' => ['required', 'string', new CategoryExists],
         ]);
-        if ($validators->fails()) {
-            return Response::json(['errors' => $validators->getMessageBag()->toArray()]);
-        } else {
-            $article = Article::where('id', $request->id)->where('author_id', Auth::user()->id)->first();
-            if ($article) {
-                $article->title = $request->title;
-                $article->author_id = Auth::user()->id;
-                $article->category_id = $request->category;
-                $article->body = $request->body;
-                if ($request->file('image') == NULL) {
-                    $article->image = 'placeholder.png';
-                } else {
-                    $filename = Str::random(20) . '.' . $request->file('image')->getClientOriginalExtension();
-                    $article->image = $filename;
-                    $request->image->move(public_path('images'), $filename);
-                }
-                $article->save();
-                return Response::json(['success' => 'Article updated successfully !']);
-            } else {
-                return Response::json(['error' => 'Article not found !']);
-            }
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
         }
+
+        $article = Article::findOrFail($id);
+        $category = Category::where('title', $request->category)->first();
+
+        $data = $request->only(['title', 'description', 'text', 'status']);
+        $data['slug'] = Str::slug($request->title);
+        $data['category_id'] = $category->id;
+
+        if ($request->hasFile('image')) {
+            // Remove old image if exists
+            if ($article->image) {
+                $oldImagePath = public_path('images') . '/' . $article->image;
+                if (file_exists($oldImagePath)) {
+                    unlink($oldImagePath);
+                }
+            }
+
+            $image = $request->file('image');
+            $filename = time() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('images'), $filename);
+            $data['image'] = $filename;
+        }
+
+        $article->update($data);
+
+        return Response::json([
+            'article' => new ArticleResource($article),
+            'success' => 'Article updated successfully!'
+        ]);
     }
 
     // remove article using id
@@ -127,12 +162,12 @@ class ArticleController extends Controller
             $article = Article::where('id', $request->id)->where('author_id', Auth::user()->id)->first();
             if ($article) {
                 $article->delete();
-                return Response::json(['success' => 'Article removed successfully !']);
+                return Response::json(['success' => 'ArticleStoreRequest removed successfully !']);
             } else {
-                return Response::json(['error' => 'Article not found!']);
+                return Response::json(['error' => 'ArticleStoreRequest not found!']);
             }
         } catch (\Illuminate\Database\QueryException $exception) {
-            return Response::json(['error' => 'Article belongs to comment.So you cann\'t delete this article!']);
+            return Response::json(['error' => 'ArticleStoreRequest belongs to comment.So you cann\'t delete this article!']);
         }
     }
 
@@ -153,7 +188,7 @@ class ArticleController extends Controller
         if (Article::where('id', $id)->first()) {
             return CommentResource::collection(Comment::where('article_id', $id)->get());
         } else {
-            return Response::json(['error' => 'Article not found!']);
+            return Response::json(['error' => 'ArticleStoreRequest not found!']);
         }
     }
 }

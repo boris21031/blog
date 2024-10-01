@@ -27,18 +27,15 @@ Route::post('category/remove','CategoryController@remove')->middleware('auth:api
 Route::get('category/{keyword}/search','CategoryController@searchCategory');
 /**********************************   Category Route Ends Here   *******************************************/
 
-/**********************************   Article Route Starts Here   *******************************************/
-Route::get('articles','ArticleController@index')->middleware('auth:api');
-Route::post('article/check/title','ArticleController@checkTitle')->middleware('auth:api');
-Route::post('article/check/category','ArticleController@checkCategory')->middleware('auth:api');
-Route::post('article/check/body','ArticleController@checkBody')->middleware('auth:api');
+/**********************************   ArticleStoreRequest Route Starts Here   *******************************************/
+Route::get('articles','ArticleController@index');
 Route::post('article/store','ArticleController@store')->middleware('auth:api');
 Route::get('article/{id}/show','ArticleController@show');
 Route::post('article/update','ArticleController@update')->middleware('auth:api');
 Route::post('article/remove','ArticleController@remove')->middleware('auth:api');
 Route::get('article/{keyword}/search','ArticleController@searchArticle');
 Route::get('article/{id}/comments','ArticleController@comments');
-/**********************************   Article Route Ends Here   *******************************************/
+/**********************************   ArticleStoreRequest Route Ends Here   *******************************************/
 
 /**********************************   Comment Route Starts Here   *******************************************/
 Route::get('comments','CommentController@index')->middleware('auth:api');
@@ -56,7 +53,7 @@ Route::post('author/check/name','AuthorController@checkName');
 Route::post('author/check/email','AuthorController@checkEmail');
 Route::post('author/check/password','AuthorController@checkPassword');
 Route::post('register','AuthorController@register');
-Route::post('login','AuthorController@login');
+Route::post('login', 'AuthorController@login')->name('login');
 Route::get('author/detail','AuthorController@getAuthor')->middleware('auth:api');
 Route::post('logout','AuthorController@logout')->middleware('auth:api');
 /**********************************   Author Route Ends Here   *******************************************/

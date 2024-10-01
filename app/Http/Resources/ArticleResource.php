@@ -18,10 +18,13 @@ class ArticleResource extends JsonResource
             'id'=>$this->id,
             'image'=>asset('images/'.$this->image),
             'title'=>$this->title,
-            'body'=>$this->body,
+            'description'=>$this->description,
+            'slug'=>$this->slug,
+            'text'=>$this->text,
             'category_title'=>$this->category->title,
             'category'=>$this->category_id,
-            'author'=>$this->author->name
+            'author'=>$this->author->name,
+//            'comments'=> $this->comment->comments->count(),
         ];
     }
 }
