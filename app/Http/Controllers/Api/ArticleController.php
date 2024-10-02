@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\ArticleStatusEnum;
-use App\Enums\CategoryEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Rules\CategoryExists;
@@ -16,7 +15,6 @@ use App\Http\Resources\CommentResource;
 use App\Models\Article;
 use App\Models\Comment;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 
 class ArticleController extends Controller
 {
@@ -58,10 +56,12 @@ class ArticleController extends Controller
         if ($request->get('sort') === 'latest') {
             $query->orderBy('created_at', 'desc');
         }
+        $query->withCount('reactions');
+        $query->with('comment.author');
 
         $articles = $query->paginate(10);
 
-        return response()->json($articles);
+        return response()->json(ArticleResource::collection($articles));
     }
 
     // store new article into the database

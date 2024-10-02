@@ -39,11 +39,18 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function article(){
+    public function article(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
         return $this->hasMany(Article::class);
     }
 
-    public function comment(){
+    public function comment(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
         return $this->hasMany(Comment::class);
+    }
+
+    public function likes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Reaction::class);
     }
 }

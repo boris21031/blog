@@ -16,27 +16,11 @@ class CommentController extends Controller {
         return CommentResource::collection(Comment::where('author_id',Auth::user()->id)->orderBy('id','DESC')->paginate(10));
     }
 
-    // check comment validation
-    public function checkComment(Request $request){
-        $validators = Validator::make($request->all(),[
-            'comment'=>'required'
-        ]);
-        return Response::json(['errors'=>$validators->getMessageBag()->toArray()]);
-    }
-
-    // check article validation
-    public function checkArticle(Request $request){
-        $validators = Validator::make($request->all(),[
-            'article'=>'required'
-        ]);
-        return Response::json(['errors'=>$validators->getMessageBag()->toArray()]);
-    }
-
     // store new comment into the database
     public function store(Request $request){
         $validators=Validator::make($request->all(),[
             'comment'=>'required',
-            'article'=>'required'
+            'article_id'=>'required'
         ]);
         if($validators->fails()){
             return Response::json(['errors'=>$validators->getMessageBag()->toArray()]);
@@ -44,7 +28,7 @@ class CommentController extends Controller {
             $comment=new Comment();
             $comment->comment=$request->comment;
             $comment->author_id=Auth::user()->id;
-            $comment->article_id=$request->article;
+            $comment->article_id=$request->article_id;
             $comment->save();
             return Response::json(['success'=>'Comment created successfully !']);
         }
@@ -63,7 +47,7 @@ class CommentController extends Controller {
     public function update(Request $request){
         $validators=Validator::make($request->all(),[
             'comment'=>'required',
-            'article'=>'required'
+            'article_id'=>'required'
         ]);
         if($validators->fails()){
             return Response::json(['errors'=>$validators->getMessageBag()->toArray()]);
@@ -72,7 +56,7 @@ class CommentController extends Controller {
             if($comment){
                 $comment->comment=$request->comment;
                 $comment->author_id=Auth::user()->id;
-                $comment->article_id=$request->article;
+                $comment->article_id=$request->article_id;
                 $comment->save();
                 return Response::json(['success'=>'Comment updated successfully !']);
             }else{

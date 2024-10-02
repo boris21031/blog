@@ -39,13 +39,16 @@ Route::get('article/{id}/comments','ArticleController@comments');
 
 /**********************************   Comment Route Starts Here   *******************************************/
 Route::get('comments','CommentController@index')->middleware('auth:api');
-Route::post('comment/check/comment','CommentController@checkComment')->middleware('auth:api');
-Route::post('comment/check/article','CommentController@checkArticle')->middleware('auth:api');
 Route::post('comment/store','CommentController@store')->middleware('auth:api');
 Route::get('comment/{id}/show','CommentController@show');
 Route::post('comment/{id}/update','CommentController@update')->middleware('auth:api');
 Route::post('comment/{id}/remove','CommentController@remove')->middleware('auth:api');
 /**********************************   Comment Route Ends Here   *******************************************/
+
+/**********************************   Reaction Route Starts Here   *******************************************/
+Route::post('reaction/store','ReactionController@store')->middleware('auth:api');
+Route::post('reaction/destroy','ReactionController@destroy')->middleware('auth:api');
+/**********************************   Reaction Route Ends Here   *******************************************/
 
 /**********************************   Author Route Starts Here   *******************************************/
 Route::get('authors','AuthorController@index')->middleware('auth:api');

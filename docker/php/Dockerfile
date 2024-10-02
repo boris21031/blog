@@ -45,4 +45,6 @@ COPY --chown=$uid:$user . /var/www
 # Expose port 9000 and start php-fpm server
 EXPOSE 9000
 CMD ["php-fpm"]
+# Start php-fpm server and run composer install and php artisan migrate
+CMD ["sh", "-c", "composer install && php artisan migrate && php-fpm"]
 

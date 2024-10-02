@@ -15,7 +15,7 @@ class StoreReactionRequest extends CommonRequest
                 'required',
                 'bool',
             ],
-            'post_id' => [
+            'article_id' => [
                 'required',
                 'int',
                 Rule::exists(Article::class, 'id')

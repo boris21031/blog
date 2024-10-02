@@ -8,7 +8,7 @@ class Reaction extends Model
 {
     protected $fillable = [
         'user_id',
-        'post_id',
+        'article_id',
         'is_liked'
     ];
 
@@ -17,5 +17,15 @@ class Reaction extends Model
         return [
             'is_liked' => 'bool'
         ];
+    }
+
+    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function article(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Article::class);
     }
 }
