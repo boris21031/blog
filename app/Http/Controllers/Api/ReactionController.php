@@ -18,7 +18,7 @@ class ReactionController extends Controller
                 ['user_id' => $request->author_id, 'article_id' => $request->article_id],
                 ['is_liked' => $request->is_liked]
             );
-            return Response::json(['success'=>'Comment added successfully !']);
+            return Response::json(['success'=>'Reaction added successfully !']);
         } catch (\Illuminate\Database\QueryException $exception){
             return Response::json(['error'=>'еще не придумал формат вывода ошибки']);
         }
@@ -35,7 +35,7 @@ class ReactionController extends Controller
                 return Response::json(['error'=>'Comment not found!']);
             }
         }catch(\Illuminate\Database\QueryException $exception){
-            return Response::json(['error'=>'Comment belongs to author/article.So you cann\'t delete this comment!']);
+            return Response::json(['error'=>'Reaction belongs to author/article.So you cann\'t delete this comment!']);
         }
     }
 }

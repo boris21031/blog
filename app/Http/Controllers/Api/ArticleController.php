@@ -81,7 +81,18 @@ class ArticleController extends Controller
         }
         $category = Category::where('title', $request->category)->first();
         $data = $request->only(['title', 'description', 'text','body', 'status']);
-        $data['slug'] = Str::slug($request->title);
+        // Создаем базовый slug с использованием категории
+        $baseSlug = Str::slug($category->title . '-' . $request->title);
+        $slug = $baseSlug;
+        $counter = 1;
+
+        // Проверяем уникальность slug и добавляем суффикс, если необходимо
+        while (Article::where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        $data['slug'] = $slug;
         $data['author_id'] = auth()->id();
         $data['category_id'] = $category->id;
 
@@ -96,7 +107,7 @@ class ArticleController extends Controller
         return Response::json([
             'article' => new ArticleResource($article),
             'success' => 'ArticleStoreRequest created successfully !'
-        ]);
+        ], 200, [], JSON_PRETTY_PRINT);
     }
 
     // show a specific article by id
@@ -115,6 +126,7 @@ class ArticleController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'views' => 'required|integer|min:0',
             'text' => 'required|string',
             'status' => 'required|integer|in:1,2,3',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
@@ -128,8 +140,18 @@ class ArticleController extends Controller
         $article = Article::findOrFail($id);
         $category = Category::where('title', $request->category)->first();
 
-        $data = $request->only(['title', 'description', 'text', 'status']);
-        $data['slug'] = Str::slug($request->title);
+        $data = $request->only(['title', 'description', 'text', 'status', 'views']);
+        // Создаем базовый slug с использованием категории
+        $baseSlug = Str::slug($category->title . '-' . $request->title);
+        $slug = $baseSlug;
+        $counter = 1;
+
+        // Проверяем уникальность slug и добавляем суффикс, если необходимо
+        while (Article::where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+        $data['slug'] = $slug;
         $data['category_id'] = $category->id;
 
         if ($request->hasFile('image')) {
@@ -176,9 +198,9 @@ class ArticleController extends Controller
     {
         $articles = Article::where('title', 'LIKE', '%' . $request->keyword . '%')->get();
         if (count($articles) == 0) {
-            return Response::json(['message' => 'No article match found !']);
+            return response()->json(['message' => 'No article match found !']);
         } else {
-            return Response::json($articles);
+            return response()->json(ArticleResource::collection($articles));
         }
     }
 

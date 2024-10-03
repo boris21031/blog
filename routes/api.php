@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -52,9 +51,6 @@ Route::post('reaction/destroy','ReactionController@destroy')->middleware('auth:a
 
 /**********************************   Author Route Starts Here   *******************************************/
 Route::get('authors','AuthorController@index')->middleware('auth:api');
-Route::post('author/check/name','AuthorController@checkName');
-Route::post('author/check/email','AuthorController@checkEmail');
-Route::post('author/check/password','AuthorController@checkPassword');
 Route::post('register','AuthorController@register');
 Route::post('login', 'AuthorController@login')->name('login');
 Route::get('author/detail','AuthorController@getAuthor')->middleware('auth:api');
